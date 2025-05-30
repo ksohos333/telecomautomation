@@ -17,10 +17,21 @@ An AI-powered automation system for customer support and tech support roles, spe
 - n8n (for workflow automation)
 - Pinecone account (for vector database)
 - OpenAI API key
+- Git (for version control)
+- GitHub account (optional, for remote repository)
 
 ## Setup
 
-1. Clone the repository
+1. Clone the repository or set up a new one:
+   ```
+   # If cloning from GitHub
+   git clone https://github.com/YOUR_USERNAME/telecom-auto.git
+   cd telecom-auto
+   
+   # If setting up a new repository
+   # See github-setup-instructions.md for detailed steps
+   ```
+   
 2. Install dependencies:
    ```
    npm install
@@ -108,4 +119,3 @@ The system consists of the following components:
 ## License
 
 ISC
-
