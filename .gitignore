@@ -22,4 +22,9 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
-node_modules
+
+# Screenshots
+public/screenshots/
+
+# Test audio files
+test-audio/

@@ -5,13 +5,13 @@ const logger = require('../utils/logger');
 const transporter = nodemailer.createTransport({
   service: 'gmail',  // Use Gmail as the email service
   auth: {
-    user: process.env.EMAIL_USER || 'konstantinos.sohos@gmail.com', // Your Gmail address
-    pass: process.env.EMAIL_APP_PASSWORD || 'vzkl klav hpqf xnbv' // Your Gmail app password
+    user: process.env.EMAIL_USER, // Your Gmail address from environment variables
+    pass: process.env.EMAIL_APP_PASSWORD // Your Gmail app password from environment variables
   }
 });
 
 // Verify connection configuration
-transporter.verify(function(error, success) {
+transporter.verify(function (error, success) {
   if (error) {
     logger.error('Email service error:', error);
   } else {
@@ -31,17 +31,17 @@ transporter.verify(function(error, success) {
 async function sendEmail(options) {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'konstantinos.sohos@gmail.com',
+      from: process.env.EMAIL_USER,
       to: options.to,
       subject: options.subject,
       text: options.text,
       html: options.html || ''
     };
-    
+
     logger.info(`Sending email to ${options.to} with subject: ${options.subject}`);
     const info = await transporter.sendMail(mailOptions);
     logger.info(`Email sent: ${info.messageId}`);
-    
+
     return info;
   } catch (error) {
     logger.error('Error sending email:', error);
@@ -52,4 +52,3 @@ async function sendEmail(options) {
 module.exports = {
   sendEmail
 };
-

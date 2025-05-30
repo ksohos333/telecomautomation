@@ -18,7 +18,7 @@ async function generateEmbedding(text) {
       model: config.embeddingModel,
       input: text,
     });
-    
+
     return response.data[0].embedding;
   } catch (error) {
     logger.error('Error generating embedding:', error);
@@ -42,11 +42,11 @@ async function classifyIntent(content) {
         },
         {
           role: 'user',
-          content
+          content: content
         }
       ]
     });
-    
+
     return response.choices[0].message.content.trim();
   } catch (error) {
     logger.error('Error classifying intent:', error);
@@ -64,11 +64,11 @@ async function classifyIntent(content) {
 async function generateResponse(content, docs = [], systemPrompt = '') {
   try {
     const docsText = docs.join('\n\n');
-    
+
     // Use custom system prompt if provided, otherwise use default
-    const finalSystemPrompt = systemPrompt || 
+    const finalSystemPrompt = systemPrompt ||
       `You are a Notion support agent. Use these docs to help answer the user's question:\n\n${docsText}\n\nIf you don't know the answer, or if this is a refund request, politely say you'll escalate to a human agent.`;
-    
+
     const response = await openai.chat.completions.create({
       model: config.completionModel,
       messages: [
@@ -78,13 +78,13 @@ async function generateResponse(content, docs = [], systemPrompt = '') {
         },
         {
           role: 'user',
-          content
+          content: content
         }
       ],
       temperature: 0.7,
       max_tokens: 500
     });
-    
+
     return response.choices[0].message.content.trim();
   } catch (error) {
     logger.error('Error generating response:', error);
