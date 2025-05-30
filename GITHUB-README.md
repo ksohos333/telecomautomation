@@ -6,7 +6,9 @@ This document provides a quick reference for setting up and working with GitHub 
 
 - `github-setup-instructions.md`: Detailed instructions for setting up GitHub
 - `connect-to-github.bat`: Windows script to connect your local repository to GitHub
+- `connect-to-github.sh`: Unix/macOS script to connect your local repository to GitHub
 - `check-github-connection.bat`: Windows script to verify GitHub connection
+- `check-github-connection.sh`: Unix/macOS script to verify GitHub connection
 
 ## Quick Start
 
@@ -16,12 +18,13 @@ This document provides a quick reference for setting up and working with GitHub 
    - Do NOT initialize with README, .gitignore, or license
 
 2. **Connect Your Local Repository**
-   - Run `connect-to-github.bat` (Windows)
+   - Windows: Run `connect-to-github.bat`
+   - macOS/Linux: Run `bash connect-to-github.sh`
    - Enter your GitHub username and repository name when prompted
-   - For macOS/Linux, see `github-setup-instructions.md`
 
 3. **Verify Connection**
-   - Run `check-github-connection.bat` to verify the connection
+   - Windows: Run `check-github-connection.bat`
+   - macOS/Linux: Run `bash check-github-connection.sh`
 
 4. **Work with Codex**
    - Use GitHub Codespaces (recommended)
