@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Ticket Test Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 150px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            min-height: 100px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            background-color: #f1f1f1;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 2px solid white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 0 4px 4px 4px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Support Ticket Test Form</h1>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('form-tab')">Submit Ticket</div>
+        <div class="tab" onclick="showTab('metrics-tab')">View Metrics</div>
+    </div>
+    
+    <div id="form-tab" class="tab-content active">
+        <form id="supportForm">
+            <div class="form-group">
+                <label for="ticketId">Ticket ID (optional):</label>
+                <input type="text" id="ticketId" placeholder="Leave blank to auto-generate">
+            </div>
+            
+            <div class="form-group">
+                <label for="content">Message Content:</label>
+                <textarea id="content" required placeholder="Enter your support question here..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="userEmail">Email:</label>
+                <input type="email" id="userEmail" placeholder="your.email@example.com">
+            </div>
+            
+            <button type="submit">Submit Ticket</button>
+        </form>
+        
+        <div id="response">Response will appear here...</div>
+    </div>
+    
+    <div id="metrics-tab" class="tab-content">
+        <button onclick="fetchMetrics()">Refresh Metrics</button>
+        <div id="metrics-response">Metrics will appear here...</div>
+    </div>
+    
+    <script>
+        // Show the selected tab
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show the selected tab
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+        }
+        
+        // Handle form submission
+        document.getElementById('supportForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const ticketId = document.getElementById('ticketId').value;
+            const content = document.getElementById('content').value;
+            const userEmail = document.getElementById('userEmail').value;
+            
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = 'Sending request...';
+            
+            try {
+                // Send to our webhook endpoint
+                const response = await fetch('http://localhost:3001/webhook/trigger-support', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ticketId,
+                        content,
+                        userEmail
+                    })
+                });
+                
+                const data = await response.json();
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+        
+        // Fetch metrics
+        async function fetchMetrics() {
+            const metricsDiv = document.getElementById('metrics-response');
+            metricsDiv.textContent = 'Fetching metrics...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/webhook/metrics');
+                const data = await response.json();
+                metricsDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                metricsDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

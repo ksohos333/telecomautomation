@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Support Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .response {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .screenshots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .screenshots img {
+            max-width: 300px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Voice Support Test</h1>
+    
+    <div class="container">
+        <h2>Record Your Question</h2>
+        <p>Click the button below to start recording your question about Notion, VPN setup, or other technical issues.</p>
+        <button id="start-recording">Start Recording</button>
+        <div id="recording-status" style="margin-top: 10px; display: none;"></div>
+        <div id="audio-player" style="margin-top: 10px; display: none;"></div>
+    </div>
+    
+    <div class="container">
+        <h2>Text-to-Speech Test</h2>
+        <p>Type your question below and get a voice response:</p>
+        <textarea id="text-input" placeholder="e.g., Why is notion not working?"></textarea>
+        <button id="get-voice-response">Get Voice Response</button>
+        
+        <div id="text-response" class="response" style="display: none;">
+            <h3>Response:</h3>
+            <p id="response-text"></p>
+            <audio id="audio-response" controls style="margin-top: 10px; display: none;"></audio>
+            <div id="screenshots" class="screenshots"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Text-to-Speech functionality
+        document.getElementById('get-voice-response').addEventListener('click', async () => {
+            const textInput = document.getElementById('text-input').value;
+            if (!textInput) {
+                alert('Please enter some text');
+                return;
+            }
+            
+            const responseDiv = document.getElementById('text-response');
+            responseDiv.style.display = 'none';
+            
+            try {
+                const ticketId = `test-${Date.now()}`;
+                
+                // Show loading state
+                document.getElementById('get-voice-response').disabled = true;
+                document.getElementById('get-voice-response').textContent = 'Processing...';
+                
+                const response = await fetch(`/api/voice/tickets/${ticketId}/response`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: textInput })
+                });
+                
+                // Reset button
+                document.getElementById('get-voice-response').disabled = false;
+                document.getElementById('get-voice-response').textContent = 'Get Voice Response';
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display the text response
+                document.getElementById('response-text').textContent = data.textResponse || 'No text response provided';
+                
+                // Handle audio if available
+                const audioPlayer = document.getElementById('audio-response');
+                if (data.audioUrl) {
+                    audioPlayer.src = data.audioUrl;
+                    audioPlayer.style.display = 'block';
+                } else {
+                    audioPlayer.style.display = 'none';
+                }
+                
+                // Display screenshots if available
+                const screenshotsDiv = document.getElementById('screenshots');
+                screenshotsDiv.innerHTML = '';
+                
+                if (data.puppeteerResult && data.puppeteerResult.screenshots && data.puppeteerResult.screenshots.length > 0) {
+                    data.puppeteerResult.screenshots.forEach((screenshot, index) => {
+                        const img = document.createElement('img');
+                        img.src = screenshot;
+                        img.alt = `Screenshot ${index + 1}`;
+                        screenshotsDiv.appendChild(img);
+                    });
+                }
+                
+                responseDiv.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Error: ${error.message}`);
+            }
+        });
+        
+        // Recording functionality
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        
+        document.getElementById('start-recording').addEventListener('click', async () => {
+            const recordingStatus = document.getElementById('recording-status');
+            const audioPlayer = document.getElementById('audio-player');
+            const startButton = document.getElementById('start-recording');
+            
+            if (!isRecording) {
+                // Start recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.addEventListener('dataavailable', event => {
+                        audioChunks.push(event.data);
+                    });
+                    
+                    mediaRecorder.addEventListener('stop', async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        
+                        // Create audio player
+                        audioPlayer.innerHTML = `<audio controls src="${audioUrl}"></audio>`;
+                        audioPlayer.style.display = 'block';
+                        
+                        // Create form data for upload
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob, 'recording.wav');
+                        
+                        try {
+                            recordingStatus.textContent = 'Processing audio...';
+                            
+                            const callId = `call-${Date.now()}`;
+                            const response = await fetch(`/api/voice/call/${callId}`, {
+                                method: 'POST',
+                                body: formData
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                            }
+                            
+                            const data = await response.json();
+                            
+                            // Display the response
+                            document.getElementById('response-text').textContent = data.textResponse || 'No text response provided';
+                            
+                            // Handle audio if available
+                            const audioResponse = document.getElementById('audio-response');
+                            if (data.audioUrl) {
+                                audioResponse.src = data.audioUrl;
+                                audioResponse.style.display = 'block';
+                            } else {
+                                audioResponse.style.display = 'none';
+                            }
+                            
+                            // Display screenshots if available
+                            const screenshotsDiv = document.getElementById('screenshots');
+                            screenshotsDiv.innerHTML = '';
+                            
+                            if (data.puppeteerResult && data.puppeteerResult.screenshots && data.puppeteerResult.screenshots.length > 0) {
+                                data.puppeteerResult.screenshots.forEach((screenshot, index) => {
+                                    const img = document.createElement('img');
+                                    img.src = screenshot;
+                                    img.alt = `Screenshot ${index + 1}`;
+                                    screenshotsDiv.appendChild(img);
+                                });
+                            }
+                            
+                            document.getElementById('text-response').style.display = 'block';
+                            recordingStatus.textContent = 'Processing complete!';
+                        } catch (error) {
+                            console.error('Error processing audio:', error);
+                            recordingStatus.textContent = `Error: ${error.message}`;
+                        }
+                    });
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    startButton.textContent = 'Stop Recording';
+                    recordingStatus.textContent = 'Recording... (click again to stop)';
+                    recordingStatus.style.display = 'block';
+                    audioPlayer.style.display = 'none';
+                } catch (error) {
+                    console.error('Error accessing microphone:', error);
+                    recordingStatus.textContent = `Error: ${error.message}`;
+                    recordingStatus.style.display = 'block';
+                }
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                isRecording = false;
+                startButton.textContent = 'Start Recording';
+                recordingStatus.textContent = 'Processing recording...';
+            }
+        });
+    </script>
+</body>
+</html>
+
+

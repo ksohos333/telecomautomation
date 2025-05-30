@@ -1,0 +1,3 @@
+@echo off
+echo Running email API test...
+node src/tests/testEmailApi.js

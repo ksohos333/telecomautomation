@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Webhook</title>
+</head>
+<body>
+    <h2>Test n8n Webhook</h2>
+    <button onclick="sendRequest()">Send Test Request</button>
+    <script>
+        function sendRequest() {
+            fetch('http://localhost:5678/webhook-test/trigger-support', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ticketId: "12345",
+                    content: "Test ticket",
+                    userEmail: "test@example.com"
+                })
+            })
+            .then(response => response.json())
+            .then(data => alert('Success: ' + JSON.stringify(data)))
+            .catch(error => alert('Error: ' + error));
+        }
+    </script>
+</body>
+</html>

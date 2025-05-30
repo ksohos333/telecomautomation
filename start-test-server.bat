@@ -1,0 +1,3 @@
+@echo off
+echo Starting test server on port 3001...
+node test-server-3001.js

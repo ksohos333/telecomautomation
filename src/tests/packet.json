@@ -1,0 +1,13 @@
+{
+  "name": "telecom_auto",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "populate-pinecone": "node src/utils/populatePinecone.js",
+    "test-email": "node src/tests/testEmailSender.js",
+    "test-api": "node src/tests/testEmailApi.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

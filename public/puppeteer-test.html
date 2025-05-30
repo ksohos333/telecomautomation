@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puppeteer Automation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .form-container {
+            flex: 1;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .results-container {
+            flex: 2;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .screenshots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .screenshot {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            width: calc(50% - 5px);
+        }
+        .screenshot img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .screenshot-caption {
+            padding: 5px;
+            background-color: #f2f2f2;
+            text-align: center;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        .error-details {
+            background-color: #f8f9fa;
+            border-left: 3px solid #dc3545;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Puppeteer Automation Test</h1>
+    <p>Use this page to test the Puppeteer automation scripts for technical support issues.</p>
+    
+    <div class="container">
+        <div class="form-container">
+            <h2>Run Script</h2>
+            <form id="puppeteer-form">
+                <div class="form-group">
+                    <label for="script-select">Select Script:</label>
+                    <select id="script-select" required>
+                        <option value="">-- Select a script --</option>
+                        <option value="screen_share_issue">Screen Share Issue</option>
+                        <option value="chat_history_missing">Chat History Missing</option>
+                        <option value="template_issue">Notion Template Issue</option>
+                        <option value="vpn_connection">VPN Connection Issue</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ticket-id">Ticket ID:</label>
+                    <input type="text" id="ticket-id" value="test-ticket-1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Issue Description:</label>
+                    <textarea id="description" rows="4" placeholder="Describe the issue..."></textarea>
+                </div>
+                
+                <button type="submit">Run Script</button>
+            </form>
+        </div>
+        
+        <div class="results-container">
+            <h2>Results</h2>
+            <div id="results">
+                <p>No script has been run yet. Select a script and click "Run Script" to see results.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('puppeteer-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const scriptType = document.getElementById('script-select').value;
+            const ticketId = document.getElementById('ticket-id').value;
+            const description = document.getElementById('description').value;
+            
+            if (!scriptType || !ticketId) {
+                alert('Please select a script and enter a ticket ID');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('results').innerHTML = '<div class="loading">Running script, please wait...</div>';
+            
+            try {
+                const response = await fetch('/api/puppeteer/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        intent: scriptType,
+                        ticketId: ticketId,
+                        content: description
+                    })
+                });
+                
+                // First get the response as text to avoid JSON parsing errors
+                const responseText = await response.text();
+                
+                // Try to parse as JSON
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Failed to parse response as JSON:', responseText);
+                    displayError(`Server returned invalid JSON. Response: ${responseText.substring(0, 100)}...`);
+                    return;
+                }
+                
+                if (response.ok) {
+                    displayResults(result);
+                } else {
+                    displayError(result.error || 'An unknown error occurred');
+                }
+            } catch (error) {
+                console.error('Error running script:', error);
+                displayError(error.message || 'Failed to run script');
+            }
+        });
+        
+        function displayResults(result) {
+            let html = '';
+            
+            if (result.success) {
+                html += `<div class="status success">✅ Script executed successfully</div>`;
+            } else {
+                html += `<div class="status error">❌ Script execution failed</div>`;
+            }
+            
+            html += `<p><strong>Intent:</strong> ${result.intent}</p>`;
+            
+            if (result.message) {
+                html += `<p><strong>Message:</strong> ${result.message}</p>`;
+            }
+            
+            if (result.error) {
+                html += `<p><strong>Error:</strong> ${result.error}</p>`;
+            }
+            
+            if (result.screenshots && result.screenshots.length > 0) {
+                html += `<h3>Screenshots</h3>`;
+                html += `<div class="screenshots">`;
+                
+                result.screenshots.forEach((screenshot, index) => {
+                    html += `
+                        <div class="screenshot">
+                            <img src="${screenshot}" alt="Screenshot ${index + 1}">
+                            <div class="screenshot-caption">Step ${index + 1}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            document.getElementById('results').innerHTML = html;
+        }
+        
+        function displayError(error) {
+            const html = `
+                <div class="status error">❌ Failed to run script</div>
+                <div class="error-details">${error}</div>
+            `;
+            document.getElementById('results').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

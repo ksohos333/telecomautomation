@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Telecom Auto Support System</h1>
+    <p>Welcome to the support system. Please select an option below:</p>
+    
+    <a href="/support-test" class="button">Support Test Page</a>
+    <a href="/email-test.html" class="button">Email Test Page</a>
+    
+    <script>
+        // Automatically redirect to the support test page
+        window.location.href = "/support-test";
+    </script>
+</body>
+</html>

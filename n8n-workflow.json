@@ -1,0 +1,198 @@
+{
+  "name": "Notion Support Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-support",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract data from webhook\nreturn [\n  {\n    json: {\n      ticketId: $input.first().json.ticketId || Date.now().toString(),\n      content: $input.first().json.content,\n      userEmail: $input.first().json.userEmail || 'user@example.com'\n    }\n  }\n];"
+      },
+      "name": "Extract Ticket Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/support",
+        "options": {},
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "ticketId",
+              "value": "={{ $json.ticketId }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "userEmail",
+              "value": "={{ $json.userEmail }}"
+            }
+          ]
+        }
+      },
+      "name": "Call Support API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "operation": "equals",
+              "value2": "escalated"
+            }
+          ]
+        }
+      },
+      "name": "Is Escalated?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "#support-escalations",
+        "text": "=Ticket {{ $json.ticketId }} requires human review:\n\nContent: {{ $json.content }}\n\nIntent: {{ $json.intent }}"
+      },
+      "name": "Notify via Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "support@example.com",
+        "toEmail": "={{ $json.userEmail }}",
+        "subject": "=Re: Your Notion Support Request ({{ $json.ticketId }})",
+        "text": "={{ $json.reply }}"
+      },
+      "name": "Send Email Reply",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Ticket Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Ticket Data": {
+      "main": [
+        [
+          {
+            "node": "Call Support API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Support API": {
+      "main": [
+        [
+          {
+            "node": "Is Escalated?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Escalated?": {
+      "main": [
+        [
+          {
+            "node": "Notify via Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Email Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify via Slack": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Reply": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Support API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Support API</h1>
+    <form id="supportForm">
+        <div class="form-group">
+            <label for="ticketId">Ticket ID:</label>
+            <input type="text" id="ticketId" name="ticketId" value="12345">
+        </div>
+        <div class="form-group">
+            <label for="content">Content:</label>
+            <textarea id="content" name="content" rows="4">I'm having trouble with my Notion template</textarea>
+        </div>
+        <div class="form-group">
+            <label for="userEmail">User Email:</label>
+            <input type="email" id="userEmail" name="userEmail" value="test@example.com">
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('supportForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const ticketId = document.getElementById('ticketId').value;
+            const content = document.getElementById('content').value;
+            const userEmail = document.getElementById('userEmail').value;
+            
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = 'Sending request...';
+            
+            try {
+                // Add a query parameter to bypass any caching
+                const response = await fetch(`http://localhost:3001/support?t=${Date.now()}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ticketId,
+                        content,
+                        userEmail
+                    })
+                });
+                
+                const data = await response.json();
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

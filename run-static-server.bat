@@ -1,0 +1,3 @@
+@echo off
+echo Starting static Express server on port 3007...
+node static-express-server.js

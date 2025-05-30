@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Customer Service Automation Test Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1, h2 { color: #2c3e50; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    button { background-color: #3498db; color: white; border: none; padding: 10px 15px; 
+             border-radius: 4px; cursor: pointer; margin-right: 10px; }
+    button:hover { background-color: #2980b9; }
+    pre { background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Customer Service Automation Test Page</h1>
+  <p>Use this page to test various components of the customer service automation system.</p>
+  
+  <div class="card">
+    <h2>Error Handling Test</h2>
+    <p>Test the system's error handling capabilities:</p>
+    <button id="test404">Test 404 Error</button>
+    <button id="test500">Test 500 Error</button>
+    <div id="errorResult"></div>
+  </div>
+  
+  <div class="card">
+    <h2>Quick Links</h2>
+    <p>Access the different test interfaces:</p>
+    <ul>
+      <li><a href="http://localhost:3001/email-test.html" target="_blank">Email Support Test</a></li>
+      <li><a href="http://localhost:3001/puppeteer-test.html" target="_blank">Visual Support Test</a></li>
+      <li><a href="http://localhost:3001/support-test.html" target="_blank">Support Ticket Test</a></li>
+    </ul>
+  </div>
+  
+  <div class="card">
+    <h2>System Status</h2>
+    <button id="checkStatus">Check System Status</button>
+    <div id="statusResult"></div>
+  </div>
+
+  <script>
+    document.getElementById('test404').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('errorResult');
+      resultDiv.innerHTML = 'Testing 404 error...';
+      
+      try {
+        const response = await fetch('http://localhost:3001/api/nonexistent');
+        const text = await response.text();
+        
+        resultDiv.innerHTML = `
+          <p>Status: ${response.status} ${response.statusText}</p>
+          <pre>${text}</pre>
+        `;
+        
+        if (response.status === 404) {
+          resultDiv.innerHTML += '<p class="success">✓ 404 error handled correctly</p>';
+        } else {
+          resultDiv.innerHTML += '<p class="error">✗ Expected 404 status code</p>';
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
+    });
+    
+    document.getElementById('test500').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('errorResult');
+      resultDiv.innerHTML = 'Testing 500 error...';
+      
+      try {
+        const response = await fetch('http://localhost:3001/api/force-error');
+        const text = await response.text();
+        
+        resultDiv.innerHTML = `
+          <p>Status: ${response.status} ${response.statusText}</p>
+          <pre>${text}</pre>
+        `;
+        
+        if (response.status === 500) {
+          resultDiv.innerHTML += '<p class="success">✓ 500 error handled correctly</p>';
+        } else {
+          resultDiv.innerHTML += '<p class="error">✗ Expected 500 status code</p>';
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
+    });
+    
+    document.getElementById('checkStatus').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('statusResult');
+      resultDiv.innerHTML = 'Checking system status...';
+      
+      try {
+        const response = await fetch('http://localhost:3001/api/status');
+        const data = await response.json();
+        
+        resultDiv.innerHTML = `
+          <p>Status: ${response.status} ${response.statusText}</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+        
+        if (response.ok) {
+          resultDiv.innerHTML += '<p class="success">✓ System is running</p>';
+        } else {
+          resultDiv.innerHTML += '<p class="error">✗ System status check failed</p>';
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">Error: ${error.message}</p>
+          <p>The main server might not be running. Make sure to start all services using run-all-services.bat</p>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>

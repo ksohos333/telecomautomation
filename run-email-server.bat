@@ -1,0 +1,3 @@
+@echo off
+echo Starting simple email server on port 3007...
+node simple-email-server.js
